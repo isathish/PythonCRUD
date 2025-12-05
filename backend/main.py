@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from core.database import create_db_and_tables
-from routers import users, tags, projects, dashboards, apps, schema_builder, dynamic_data
+from routers import apps, schema_builder, dynamic_data
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -28,7 +28,7 @@ def on_startup():
 @app.get("/")
 def read_root():
     return {
-        "message": "Advanced CRUD System API",
+        "message": "PYCRUD - Dynamic CRUD Builder API",
         "version": settings.VERSION,
         "docs": "/docs"
     }
@@ -39,13 +39,7 @@ def health_check():
     return {"status": "healthy"}
 
 
-# Include routers
-app.include_router(users.router, prefix=settings.API_V1_STR)
-app.include_router(tags.router, prefix=settings.API_V1_STR)
-app.include_router(projects.router, prefix=settings.API_V1_STR)
-app.include_router(dashboards.router, prefix=settings.API_V1_STR)
-
-# Schema Builder routers
+# Meta-CRUD Builder routers
 app.include_router(apps.router, prefix=settings.API_V1_STR)
 app.include_router(schema_builder.router, prefix=settings.API_V1_STR)
 app.include_router(dynamic_data.router, prefix=settings.API_V1_STR)

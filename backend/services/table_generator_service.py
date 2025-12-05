@@ -51,7 +51,11 @@ class TableGeneratorService:
         
         # Create columns
         for col_data in columns:
-            column = ColumnSchema(**col_data.model_dump(), table_id=table_schema.id)
+            # col_data is already a dict
+            if isinstance(col_data, dict):
+                column = ColumnSchema(**col_data, table_id=table_schema.id)
+            else:
+                column = ColumnSchema(**col_data.model_dump(), table_id=table_schema.id)
             session.add(column)
         
         session.commit()

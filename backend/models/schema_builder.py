@@ -2,11 +2,13 @@
 Schema Builder Models - Store dynamic table definitions
 Allows users to create custom tables, columns, and relationships
 """
-from __future__ import annotations
 from sqlmodel import SQLModel, Field, Relationship, Column, JSON
 from typing import Optional, List, Dict, Any, TYPE_CHECKING
 from datetime import datetime
 from enum import Enum
+
+if TYPE_CHECKING:
+    pass  # Forward references will be handled by string annotations
 
 
 class ColumnType(str, Enum):
@@ -39,12 +41,14 @@ class AppBase(SQLModel):
 
 class App(AppBase, table=True):
     """Represents a complete application with multiple tables"""
+    __tablename__ = "app"
+    
     id: Optional[int] = Field(default=None, primary_key=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
-    tables = Relationship(back_populates="app")
+    tables: List["TableSchema"] = Relationship(back_populates="app")
 
 
 class AppCreate(AppBase):
@@ -72,7 +76,6 @@ class TableSchemaBase(SQLModel):
     display_name: str  # e.g., "Customers", "Orders"
     description: Optional[str] = None
     icon: Optional[str] = None
-    app_id: int = Field(foreign_key="app.id")
 
 
 class TableSchema(TableSchemaBase, table=True):
@@ -80,20 +83,21 @@ class TableSchema(TableSchemaBase, table=True):
     __tablename__ = "table_schema"
     
     id: Optional[int] = Field(default=None, primary_key=True)
+    app_id: int = Field(foreign_key="app.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
     app: Optional[App] = Relationship(back_populates="tables")
-    columns = Relationship(
+    columns: List["ColumnSchema"] = Relationship(
         back_populates="table",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
-    relationships_as_source = Relationship(
+    relationships_as_source: List["RelationshipSchema"] = Relationship(
         back_populates="source_table",
         sa_relationship_kwargs={"foreign_keys": "RelationshipSchema.source_table_id"}
     )
-    relationships_as_target = Relationship(
+    relationships_as_target: List["RelationshipSchema"] = Relationship(
         back_populates="target_table",
         sa_relationship_kwargs={"foreign_keys": "RelationshipSchema.target_table_id"}
     )
@@ -123,7 +127,6 @@ class ColumnSchemaBase(SQLModel):
     max_value: Optional[float] = None
     validation_regex: Optional[str] = None
     help_text: Optional[str] = None
-    table_id: int = Field(foreign_key="table_schema.id")
 
 
 class ColumnSchema(ColumnSchemaBase, table=True):
@@ -131,6 +134,7 @@ class ColumnSchema(ColumnSchemaBase, table=True):
     __tablename__ = "column_schema"
     
     id: Optional[int] = Field(default=None, primary_key=True)
+    table_id: int = Field(foreign_key="table_schema.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
