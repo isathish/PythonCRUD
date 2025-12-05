@@ -1,0 +1,128 @@
+{
+  "dashboards": [
+    {
+      "id": "project_summary",
+      "name": "ProjectSummary",
+      "title": "Project Dashboard",
+      "description": "Overview of all projects",
+      "widgets": [
+        {
+          "id": "total_projects",
+          "type": "metric",
+          "title": "Total Projects",
+          "query": {
+            "resource": "project",
+            "aggregate": "count"
+          }
+        },
+        {
+          "id": "active_projects",
+          "type": "metric",
+          "title": "Active Projects",
+          "query": {
+            "resource": "project",
+            "aggregate": "count",
+            "filters": {
+              "status__in": "open,in_progress"
+            }
+          }
+        },
+        {
+          "id": "total_budget",
+          "type": "metric",
+          "title": "Total Budget",
+          "query": {
+            "resource": "project",
+            "aggregate": "sum",
+            "field": "budget"
+          }
+        },
+        {
+          "id": "avg_priority",
+          "type": "metric",
+          "title": "Average Priority",
+          "query": {
+            "resource": "project",
+            "aggregate": "avg",
+            "field": "priority"
+          }
+        },
+        {
+          "id": "projects_by_status",
+          "type": "chart",
+          "chart_type": "bar",
+          "title": "Projects by Status",
+          "query": {
+            "resource": "project",
+            "group_by": "status",
+            "aggregate": "count"
+          }
+        },
+        {
+          "id": "projects_by_priority",
+          "type": "chart",
+          "chart_type": "pie",
+          "title": "Projects by Priority",
+          "query": {
+            "resource": "project",
+            "group_by": "priority",
+            "aggregate": "count"
+          }
+        },
+        {
+          "id": "high_priority_projects",
+          "type": "table",
+          "title": "High Priority Projects",
+          "query": {
+            "resource": "project",
+            "filters": {
+              "priority__gte": "4"
+            },
+            "sort": "priority:desc",
+            "limit": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "user_summary",
+      "name": "UserSummary",
+      "title": "User Dashboard",
+      "description": "User statistics and metrics",
+      "widgets": [
+        {
+          "id": "total_users",
+          "type": "metric",
+          "title": "Total Users",
+          "query": {
+            "resource": "user",
+            "aggregate": "count"
+          }
+        },
+        {
+          "id": "active_users",
+          "type": "metric",
+          "title": "Active Users",
+          "query": {
+            "resource": "user",
+            "aggregate": "count",
+            "filters": {
+              "is_active": "true"
+            }
+          }
+        },
+        {
+          "id": "users_by_role",
+          "type": "chart",
+          "chart_type": "donut",
+          "title": "Users by Role",
+          "query": {
+            "resource": "user",
+            "group_by": "role",
+            "aggregate": "count"
+          }
+        }
+      ]
+    }
+  ]
+}
