@@ -32,9 +32,9 @@ class RelationType(str, Enum):
 
 class PublishStatus(str, Enum):
     """Publishing status for app components"""
-    DRAFT = "draft"
-    PUBLISHED = "published"
-    UNPUBLISHED = "unpublished"
+    DRAFT = "DRAFT"
+    PUBLISHED = "PUBLISHED"
+    UNPUBLISHED = "UNPUBLISHED"
 
 
 class FormFieldType(str, Enum):

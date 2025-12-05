@@ -67,6 +67,7 @@ export default function TableDesigner({ appId, onUpdate }) {
         columns: []
       });
       await loadTables();
+      onUpdate?.(); // Update parent stats
       setError('');
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to create table');
@@ -110,6 +111,7 @@ export default function TableDesigner({ appId, onUpdate }) {
       setLoading(true);
       await api.delete(`/schema/tables/${tableId}`);
       await loadTables();
+      onUpdate?.(); // Update parent stats
       setError('');
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to delete table');
@@ -137,20 +139,12 @@ export default function TableDesigner({ appId, onUpdate }) {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Table Designer</h2>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            + Create Table
-          </button>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            Close
-          </button>
-        </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+        >
+          + Create Table
+        </button>
       </div>
 
       {error && (
