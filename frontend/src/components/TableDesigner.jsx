@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../api/api';
 import DynamicDataManager from './DynamicDataManager';
 
-export default function TableDesigner({ appId, onClose }) {
+export default function TableDesigner({ appId, onUpdate }) {
   const [tables, setTables] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);

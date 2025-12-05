@@ -5,7 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 from typing import List
 from core.database import get_session
-from models.schema_builder import App, AppCreate, AppUpdate, AppRead
+from models.schema_builder import (
+    App, AppCreate, AppUpdate, AppRead, PublishStatus,
+    Page, FormSchema, DashboardConfig, APIEndpoint, MenuConfig
+)
 from datetime import datetime
 
 router = APIRouter(prefix="/apps", tags=["apps"])
@@ -43,12 +46,17 @@ def list_apps(
     
     apps = session.exec(query).all()
     
-    # Add table count
+    # Add counts
     result = []
     for app in apps:
         result.append(AppRead(
             **app.model_dump(),
-            table_count=len(app.tables) if app.tables else 0
+            table_count=len(app.tables) if app.tables else 0,
+            page_count=len(app.pages) if app.pages else 0,
+            form_count=len(app.forms) if app.forms else 0,
+            dashboard_count=len(app.dashboards) if app.dashboards else 0,
+            api_count=len(app.api_endpoints) if app.api_endpoints else 0,
+            menu_count=len(app.menus) if app.menus else 0
         ))
     
     return result
@@ -63,7 +71,12 @@ def get_app(app_id: int, session: Session = Depends(get_session)):
     
     return AppRead(
         **app.model_dump(),
-        table_count=len(app.tables) if app.tables else 0
+        table_count=len(app.tables) if app.tables else 0,
+        page_count=len(app.pages) if app.pages else 0,
+        form_count=len(app.forms) if app.forms else 0,
+        dashboard_count=len(app.dashboards) if app.dashboards else 0,
+        api_count=len(app.api_endpoints) if app.api_endpoints else 0,
+        menu_count=len(app.menus) if app.menus else 0
     )
 
 
@@ -89,7 +102,66 @@ def update_app(
     
     return AppRead(
         **app.model_dump(),
-        table_count=len(app.tables) if app.tables else 0
+        table_count=len(app.tables) if app.tables else 0,
+        page_count=len(app.pages) if app.pages else 0,
+        form_count=len(app.forms) if app.forms else 0,
+        dashboard_count=len(app.dashboards) if app.dashboards else 0,
+        api_count=len(app.api_endpoints) if app.api_endpoints else 0,
+        menu_count=len(app.menus) if app.menus else 0
+    )
+
+
+@router.post("/{app_id}/publish", response_model=AppRead)
+def publish_app(app_id: int, session: Session = Depends(get_session)):
+    """Publish an application"""
+    app = session.get(App, app_id)
+    if not app:
+        raise HTTPException(status_code=404, detail=f"App with id {app_id} not found")
+    
+    # Update publish status
+    app.publish_status = PublishStatus.PUBLISHED
+    app.published_at = datetime.utcnow()
+    app.version += 1
+    app.updated_at = datetime.utcnow()
+    
+    session.add(app)
+    session.commit()
+    session.refresh(app)
+    
+    return AppRead(
+        **app.model_dump(),
+        table_count=len(app.tables) if app.tables else 0,
+        page_count=len(app.pages) if app.pages else 0,
+        form_count=len(app.forms) if app.forms else 0,
+        dashboard_count=len(app.dashboards) if app.dashboards else 0,
+        api_count=len(app.api_endpoints) if app.api_endpoints else 0,
+        menu_count=len(app.menus) if app.menus else 0
+    )
+
+
+@router.post("/{app_id}/unpublish", response_model=AppRead)
+def unpublish_app(app_id: int, session: Session = Depends(get_session)):
+    """Unpublish an application"""
+    app = session.get(App, app_id)
+    if not app:
+        raise HTTPException(status_code=404, detail=f"App with id {app_id} not found")
+    
+    # Update publish status
+    app.publish_status = PublishStatus.UNPUBLISHED
+    app.updated_at = datetime.utcnow()
+    
+    session.add(app)
+    session.commit()
+    session.refresh(app)
+    
+    return AppRead(
+        **app.model_dump(),
+        table_count=len(app.tables) if app.tables else 0,
+        page_count=len(app.pages) if app.pages else 0,
+        form_count=len(app.forms) if app.forms else 0,
+        dashboard_count=len(app.dashboards) if app.dashboards else 0,
+        api_count=len(app.api_endpoints) if app.api_endpoints else 0,
+        menu_count=len(app.menus) if app.menus else 0
     )
 
 

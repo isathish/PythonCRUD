@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/api';
-import TableDesigner from '../components/TableDesigner';
+import AppWorkspace from '../components/AppWorkspace';
 
 export default function AppBuilder() {
   const [apps, setApps] = useState([]);
@@ -85,6 +85,11 @@ export default function AppBuilder() {
     }
   };
 
+  // If an app is selected, show the workspace
+  if (selectedApp) {
+    return <AppWorkspace app={selectedApp} onBack={() => setSelectedApp(null)} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -166,7 +171,7 @@ export default function AppBuilder() {
                     onClick={() => setSelectedApp(app)}
                     className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
                   >
-                    Manage Tables
+                    Open Workspace
                   </button>
                   <button
                     onClick={() => handleDelete(app.id, app.display_name)}
@@ -286,21 +291,6 @@ export default function AppBuilder() {
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-        )}
-        {/* Table Designer Modal */}
-        {selectedApp && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-7xl w-full max-h-[95vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-3">
-                <span className="text-3xl">{selectedApp.icon}</span>
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold">{selectedApp.display_name}</h2>
-                  <p className="text-gray-600 text-sm">Manage tables and data</p>
-                </div>
-              </div>
-              <TableDesigner appId={selectedApp.id} onClose={() => setSelectedApp(null)} />
             </div>
           </div>
         )}

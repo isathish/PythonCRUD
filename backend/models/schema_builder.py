@@ -30,6 +30,45 @@ class RelationType(str, Enum):
     MANY_TO_MANY = "many_to_many"
 
 
+class PublishStatus(str, Enum):
+    """Publishing status for app components"""
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    UNPUBLISHED = "unpublished"
+
+
+class FormFieldType(str, Enum):
+    """Form field types"""
+    TEXT = "text"
+    EMAIL = "email"
+    NUMBER = "number"
+    TEXTAREA = "textarea"
+    SELECT = "select"
+    CHECKBOX = "checkbox"
+    RADIO = "radio"
+    DATE = "date"
+    DATETIME = "datetime"
+    FILE = "file"
+
+
+class WidgetType(str, Enum):
+    """Dashboard widget types"""
+    CHART = "chart"
+    TABLE = "table"
+    STAT = "stat"
+    LIST = "list"
+    CARD = "card"
+
+
+class HTTPMethod(str, Enum):
+    """HTTP methods for API endpoints"""
+    GET = "GET"
+    POST = "POST"
+    PUT = "PUT"
+    PATCH = "PATCH"
+    DELETE = "DELETE"
+
+
 # ==================== App Model ====================
 class AppBase(SQLModel):
     name: str = Field(index=True, unique=True)
@@ -46,9 +85,17 @@ class App(AppBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+    publish_status: PublishStatus = Field(default=PublishStatus.DRAFT)
+    published_at: Optional[datetime] = None
+    version: int = Field(default=1)
     
     # Relationships
     tables: List["TableSchema"] = Relationship(back_populates="app")
+    pages: List["Page"] = Relationship(back_populates="app")
+    forms: List["FormSchema"] = Relationship(back_populates="app")
+    dashboards: List["DashboardConfig"] = Relationship(back_populates="app")
+    api_endpoints: List["APIEndpoint"] = Relationship(back_populates="app")
+    menus: List["MenuConfig"] = Relationship(back_populates="app")
 
 
 class AppCreate(AppBase):
@@ -61,13 +108,22 @@ class AppUpdate(SQLModel):
     icon: Optional[str] = None
     color: Optional[str] = None
     is_active: Optional[bool] = None
+    publish_status: Optional[PublishStatus] = None
 
 
 class AppRead(AppBase):
     id: int
     created_at: datetime
     updated_at: datetime
+    publish_status: PublishStatus
+    published_at: Optional[datetime] = None
+    version: int
     table_count: Optional[int] = None
+    page_count: Optional[int] = None
+    form_count: Optional[int] = None
+    dashboard_count: Optional[int] = None
+    api_count: Optional[int] = None
+    menu_count: Optional[int] = None
 
 
 # ==================== TableSchema Model ====================
@@ -235,6 +291,238 @@ class DynamicDataUpdate(SQLModel):
 
 class DynamicDataRead(DynamicDataBase):
     id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+# ==================== Page Model ====================
+class PageBase(SQLModel):
+    name: str = Field(index=True)
+    title: str
+    route: str  # URL route for the page
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    layout: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
+    is_active: bool = Field(default=True)
+
+
+class Page(PageBase, table=True):
+    """Pages within an application"""
+    __tablename__ = "page"
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    app_id: int = Field(foreign_key="app.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    app: Optional[App] = Relationship(back_populates="pages")
+
+
+class PageCreate(PageBase):
+    pass
+
+
+class PageUpdate(SQLModel):
+    title: Optional[str] = None
+    route: Optional[str] = None
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    layout: Optional[Dict[str, Any]] = None
+    is_active: Optional[bool] = None
+
+
+class PageRead(PageBase):
+    id: int
+    app_id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+# ==================== FormSchema Model ====================
+class FormSchemaBase(SQLModel):
+    name: str = Field(index=True)
+    title: str
+    description: Optional[str] = None
+    table_name: Optional[str] = None  # Link to table for CRUD operations
+    fields: List[Dict[str, Any]] = Field(default=[], sa_column=Column(JSON))
+    validation_rules: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
+    layout: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
+    submit_action: Optional[str] = None
+    is_active: bool = Field(default=True)
+
+
+class FormSchema(FormSchemaBase, table=True):
+    """Form configurations for data entry"""
+    __tablename__ = "form_schema"
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    app_id: int = Field(foreign_key="app.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    app: Optional[App] = Relationship(back_populates="forms")
+
+
+class FormSchemaCreate(FormSchemaBase):
+    pass
+
+
+class FormSchemaUpdate(SQLModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    table_name: Optional[str] = None
+    fields: Optional[List[Dict[str, Any]]] = None
+    validation_rules: Optional[Dict[str, Any]] = None
+    layout: Optional[Dict[str, Any]] = None
+    submit_action: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class FormSchemaRead(FormSchemaBase):
+    id: int
+    app_id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+# ==================== DashboardConfig Model ====================
+class DashboardConfigBase(SQLModel):
+    name: str = Field(index=True)
+    title: str
+    description: Optional[str] = None
+    widgets: List[Dict[str, Any]] = Field(default=[], sa_column=Column(JSON))
+    layout: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
+    refresh_interval: Optional[int] = None  # seconds
+    is_active: bool = Field(default=True)
+
+
+class DashboardConfig(DashboardConfigBase, table=True):
+    """Dashboard configurations with widgets"""
+    __tablename__ = "dashboard_config"
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    app_id: int = Field(foreign_key="app.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    app: Optional[App] = Relationship(back_populates="dashboards")
+
+
+class DashboardConfigCreate(DashboardConfigBase):
+    pass
+
+
+class DashboardConfigUpdate(SQLModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    widgets: Optional[List[Dict[str, Any]]] = None
+    layout: Optional[Dict[str, Any]] = None
+    refresh_interval: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+class DashboardConfigRead(DashboardConfigBase):
+    id: int
+    app_id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+# ==================== APIEndpoint Model ====================
+class APIEndpointBase(SQLModel):
+    name: str = Field(index=True)
+    path: str  # API path e.g., /api/v1/customers
+    method: HTTPMethod
+    description: Optional[str] = None
+    table_name: Optional[str] = None  # Link to table for auto-generated CRUD
+    request_schema: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
+    response_schema: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
+    authentication_required: bool = Field(default=False)
+    custom_logic: Optional[str] = None  # Python code or SQL query
+    is_active: bool = Field(default=True)
+
+
+class APIEndpoint(APIEndpointBase, table=True):
+    """Custom API endpoints for the application"""
+    __tablename__ = "api_endpoint"
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    app_id: int = Field(foreign_key="app.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    app: Optional[App] = Relationship(back_populates="api_endpoints")
+
+
+class APIEndpointCreate(APIEndpointBase):
+    pass
+
+
+class APIEndpointUpdate(SQLModel):
+    path: Optional[str] = None
+    method: Optional[HTTPMethod] = None
+    description: Optional[str] = None
+    table_name: Optional[str] = None
+    request_schema: Optional[Dict[str, Any]] = None
+    response_schema: Optional[Dict[str, Any]] = None
+    authentication_required: Optional[bool] = None
+    custom_logic: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class APIEndpointRead(APIEndpointBase):
+    id: int
+    app_id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+# ==================== MenuConfig Model ====================
+class MenuConfigBase(SQLModel):
+    name: str = Field(index=True)
+    label: str
+    icon: Optional[str] = None
+    route: Optional[str] = None
+    parent_id: Optional[int] = None
+    order: int = Field(default=0)
+    is_active: bool = Field(default=True)
+    permissions: List[str] = Field(default=[], sa_column=Column(JSON))
+
+
+class MenuConfig(MenuConfigBase, table=True):
+    """Navigation menu configuration"""
+    __tablename__ = "menu_config"
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    app_id: int = Field(foreign_key="app.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    app: Optional[App] = Relationship(back_populates="menus")
+
+
+class MenuConfigCreate(MenuConfigBase):
+    pass
+
+
+class MenuConfigUpdate(SQLModel):
+    label: Optional[str] = None
+    icon: Optional[str] = None
+    route: Optional[str] = None
+    parent_id: Optional[int] = None
+    order: Optional[int] = None
+    is_active: Optional[bool] = None
+    permissions: Optional[List[str]] = None
+
+
+class MenuConfigRead(MenuConfigBase):
+    id: int
+    app_id: int
     created_at: datetime
     updated_at: datetime
 

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from core.database import create_db_and_tables
-from routers import apps, schema_builder, dynamic_data
+from routers import apps, schema_builder, dynamic_data, pages, forms, dashboards, api_endpoints, menus
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -43,3 +43,10 @@ def health_check():
 app.include_router(apps.router, prefix=settings.API_V1_STR)
 app.include_router(schema_builder.router, prefix=settings.API_V1_STR)
 app.include_router(dynamic_data.router, prefix=settings.API_V1_STR)
+
+# App Component routers
+app.include_router(pages.router, prefix=settings.API_V1_STR)
+app.include_router(forms.router, prefix=settings.API_V1_STR)
+app.include_router(dashboards.router, prefix=settings.API_V1_STR)
+app.include_router(api_endpoints.router, prefix=settings.API_V1_STR)
+app.include_router(menus.router, prefix=settings.API_V1_STR)
